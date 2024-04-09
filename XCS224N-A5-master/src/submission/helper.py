@@ -61,6 +61,23 @@ def finetune(reading_params_path, finetune_corpus_path, pretrain_dataset, block_
     trainer_obj = None #Trainer object (see trainer.py for more details)
     tconf = None #TrainerConfig object (see trainer.py for more details)
     ### START CODE HERE
+    if reading_params_path:
+
+        # With pretraining.
+        model.load_state_dict(torch.load(reading_params_path, map_location=torch.device('cpu')))
+        tconf = TrainerConfig(max_epochs=10, batch_size=256, learning_rate=6e-4,
+                              lr_decay=True, warmup_tokens=512 * 20,
+                              final_tokens=200 * len(pretrain_dataset) * block_size,
+                              num_workers=4)
+    else:
+
+        # Without pretraining.
+        tconf = TrainerConfig(max_epochs=75, batch_size=256, learning_rate=6e-4,
+                              lr_decay=True, warmup_tokens=512 * 20,
+                              final_tokens=200 * len(pretrain_dataset) * block_size,
+                              num_workers=4)
+    name_dataset = NameDataset(open(finetune_corpus_path, encoding='utf-8').read(), pretrain_dataset)
+    trainer_obj = Trainer(model, name_dataset, None, tconf)
     ### END CODE HERE
     return tconf, trainer_obj
 
@@ -85,6 +102,7 @@ def pretrain(pretrain_dataset, block_size, model, pretrain_lr=6e-3, writer=None)
     tconf = None #TrainerConfig object (see trainer.py for more details)
 
     ### START CODE HERE
+    
     ### END CODE HERE
     return tconf, trainer_obj
 
@@ -97,5 +115,7 @@ def train(model, writing_params_path, trainer_obj):
     ### Note: trainer_obj is of type Trainer (see trainer.py for more details)
 
     ### START CODE HERE
+    trainer_obj.train()
+    torch.save(model.state_dict(), writing_params_path)
     ### END CODE HERE
     return
