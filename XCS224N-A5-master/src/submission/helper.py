@@ -67,7 +67,7 @@ def finetune(reading_params_path, finetune_corpus_path, pretrain_dataset, block_
     tconf = None #TrainerConfig object (see trainer.py for more details)
     ### START CODE HERE
     if reading_params_path:
-        model.load_state_dict(torch.load(reading_params_path), map_location=torch.device('cpu'))
+        mmodel.load_state_dict(torch.load(reading_params_path, map_location=torch.device('cpu')))
         tconf = TrainerConfig(max_epochs=10,
                               batch_size=256,
                               learning_rate=6e-4,
