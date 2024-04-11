@@ -177,22 +177,23 @@ class CharCorruptionDataset(Dataset):
         ### [part e]: see spec above
 
         ### START CODE HERE
-        doc = self.data[idx]
-        truncated_len = np.random.randint(4, int(self.block_size * 3/4))
-        doc = doc[:truncated_len]  # Truncate to given length.
-        masked_content_len = truncated_len * np.random.normal(0.25, 0.1)
-        masked_content_len = int(np.clip(masked_content_len, 1, truncated_len - 2))  # Clip invalid random indices.
-        masked_content_idx = np.random.randint(1, truncated_len - masked_content_len)
-        prefix = doc[:masked_content_idx]
-        masked_content = doc[masked_content_idx:masked_content_idx + masked_content_len]
-        suffix = doc[masked_content_idx + masked_content_len:]
-        masked_content = prefix + self.MASK_CHAR + suffix + self.MASK_CHAR + masked_content  # Rearrange.
-        masked_content += self.PAD_CHAR * (self.block_size - len(masked_content))  # Pad to block_size.
-
-        # Encode into long tensors.
-        x = torch.tensor([self.stoi[c] for c in masked_content[:-1]], dtype=torch.long)
-        y = torch.tensor([self.stoi[c] for c in masked_content[1:]], dtype=torch.long)
-        return x, y      
+        document = self.data[idx]
+        truncated_len = random.randint(4, int(self.block_size * 3/4))
+        truncated_document = document[:truncated_len]
+        masked_content_len = max(0, int(random.gauss(1 / 4 * truncated_len, 1)))
+        prefix_len = int((truncated_len - masked_content_len) / 2)
+        prefix = truncated_document[:prefix_len]
+        masked_content = truncated_document[prefix_len:prefix_len + masked_content_len]
+        suffix = truncated_document[prefix_len + masked_content_len:]
+        masked_string = prefix + self.MASK_CHAR + suffix + self.MASK_CHAR + masked_content
+        pads_len = self.block_size - len(masked_string) + 1
+        pads = self.PAD_CHAR * pads_len
+        masked_string += pads
+        inp = masked_string[:-1]
+        out = masked_string[1:]
+        x = torch.tensor([self.stoi[ch] for ch in inp], dtype=torch.long)
+        y = torch.tensor([self.stoi[ch] for ch in out], dtype=torch.long)
+        return x, y
         ### END CODE HERE
 
         #raise NotImplementedError
