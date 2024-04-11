@@ -91,7 +91,6 @@ class DownProjectBlock(nn.Module):
         self.ln1 = nn.LayerNorm(config.n_embd)
         self.ln2 = nn.LayerNorm(config.n_embd)
         self.attn = CausalCrossAttention(config)
-        self.C = nn.Parameter(nn.init.xavier_uniform_(torch.empty(1, config.bottleneck_dim, config.n_embd)))
 
         self.mlp = nn.Sequential(
             nn.Linear(config.n_embd, 4 * config.n_embd),
@@ -99,6 +98,8 @@ class DownProjectBlock(nn.Module):
             nn.Linear(4 * config.n_embd, config.n_embd),
             nn.Dropout(config.resid_pdrop),
         )
+
+        self.C = nn.Parameter(nn.init.xavier_uniform_(torch.empty(1, config.bottleneck_dim, config.n_embd)))
         
         ### END CODE HERE
 
@@ -112,7 +113,7 @@ class DownProjectBlock(nn.Module):
 
         ### START CODE HERE
 
-        x_attn = self.attn(self.ln1(x_input), self.ln1(self.C))
+        x_attn = self.C + self.attn(x_kv=self.ln1(x_input), x_q=self.ln1(self.C))
         x_attn = x_attn + self.mlp(self.ln2(x_attn))
         return x_attn
 
@@ -155,7 +156,7 @@ class UpProjectBlock(nn.Module):
         ### Should be around 3-5 lines.
 
         ### START CODE HERE
-        x_attn = self.attn(self.ln1(y), x_input)
+        x_attn = x_input + self.attn(x_kv=self.ln1(y), x_q=self.ln1(x_input))
         x_attn = x_attn + self.mlp(self.ln2(x_attn))
         return x_attn
         ### END CODE HERE
